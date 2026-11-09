@@ -1,6 +1,6 @@
 # Be a Node & Express Expert 🚀
 
-Welcome to the **Be a Node & Express Expert** repository! This repository provides a comprehensive, hands-on learning roadmap for mastering backend web development—progressing from core JavaScript module systems and pure Node.js HTTP servers to production-ready, modular Express.js architectures backed by PostgreSQL.
+Welcome to the **Be a Node & Express Expert** repository! This repository provides a comprehensive, hands-on learning roadmap for mastering backend web development—progressing from core JavaScript module systems and pure Node.js HTTP servers to Express.js architectures backed by PostgreSQL.
 
 ---
 
@@ -11,7 +11,6 @@ Welcome to the **Be a Node & Express Expert** repository! This repository provid
   - [Module 5: JavaScript Module Systems (CommonJS vs ESM)](#module-5-javascript-module-systems-commonjs-vs-esm)
   - [Module 6: Pure Node.js HTTP Server & Custom REST API](#module-6-pure-nodejs-http-server--custom-rest-api)
   - [Module 7: Express.js Fundamentals & PostgreSQL Integration](#module-7-expressjs-fundamentals--postgresql-integration)
-  - [Module 8: Modular Architecture & Clean Code Pattern](#module-8-modular-architecture--clean-code-pattern)
 - [Tech Stack](#-tech-stack)
 - [Getting Started & Branch Navigation](#-getting-started--branch-navigation)
 - [Environment Configuration](#-environment-configuration)
@@ -29,7 +28,6 @@ The codebase is organized into independent Git branches corresponding to each le
 | **[`module-5`](https://github.com/Apollo-Level2-Web-Dev/be-a-node-express-expert-b8/tree/module-5)** | Module Systems | `commonjs/`, `esm/` | CommonJS (`require`) vs ECMAScript Modules (`import`/`export`) |
 | **[`module-6`](https://github.com/Apollo-Level2-Web-Dev/be-a-node-express-expert-b8/tree/module-6)** | Pure Node.js | `node/` (TypeScript) | Raw `http` server, custom stream body-parser, JSON database CRUD |
 | **[`module-7`](https://github.com/Apollo-Level2-Web-Dev/be-a-node-express-expert-b8/tree/module-7)** | Express & SQL | `express/` (TypeScript) | Express setup, PostgreSQL connection pool (`pg`), raw SQL CRUD |
-| **[`module-8`](https://github.com/Apollo-Level2-Web-Dev/be-a-node-express-expert-b8/tree/module-8)** | Modular Pattern | `express/` (TypeScript) | Enterprise separation of concerns: Route, Controller, Service, Interface |
 
 ---
 
@@ -120,10 +118,10 @@ This module transitions from vanilla Node.js to Express.js and integrates a rela
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `GET` | `/` | API status |
-| `GET` | `/api/v1/users` | Retrieve all users |
-| `GET` | `/api/v1/users/:id` | Retrieve user by ID |
 | `POST` | `/api/v1/users` | Register a new user |
-| `PUT` | `/api/v1/users/:id` | Update user details (name, password, age, isActive) |
+| `GET` | `/api/v1/users` | Retrieve all users |
+| `GET` | `/api/v1/users/:id` | Retrieve single user by ID |
+| `PUT` | `/api/v1/users/:id` | Update user details (name, password, age, is_Active) |
 | `DELETE` | `/api/v1/users/:id` | Delete a user |
 
 ```text
@@ -133,41 +131,6 @@ express/
 └── src/
     ├── server.ts
     └── config/index.ts
-```
-
----
-
-### Module 8: Modular Architecture & Clean Code Pattern
-> **Branch:** `module-8`  
-> **Key Concepts:** Separation of concerns, Single Responsibility Principle, Modular 3-tier architecture (Route -> Controller -> Service), clean bootstrapping.
-
-Refactoring the monolithic server into an industry-standard, scalable modular pattern:
-- **`server.ts`**: Entry point responsible exclusively for starting the HTTP listener and initializing external connections (e.g., PostgreSQL database).
-- **`app.ts`**: Express application instance, global middleware setup, and top-level route registration.
-- **`db/`**: Dedicated database client connection and schema migration logic.
-- **Feature Modules (`modules/users/`)**:
-  - **`user.interface.ts`**: TypeScript type definitions and data contracts.
-  - **`user.route.ts`**: Route declarations matching HTTP verbs to controller actions.
-  - **`user.controller.ts`**: HTTP transport layer—extracts parameters, invokes services, formats responses, and handles HTTP errors.
-  - **`user.service.ts`**: Pure business logic and database interactions.
-
-```text
-express/
-├── package.json
-├── tsconfig.json
-└── src/
-    ├── app.ts                  # Express application setup
-    ├── server.ts               # Server bootstrapping & listener
-    ├── config/
-    │   └── index.ts            # Environment config loader
-    ├── db/
-    │   └── index.ts            # Database pool & initDB
-    └── modules/
-        └── users/
-            ├── user.interface.ts  # Types & interfaces
-            ├── user.route.ts      # Router configuration
-            ├── user.controller.ts # Request/Response handlers
-            └── user.service.ts    # Business logic & SQL queries
 ```
 
 ---
@@ -202,19 +165,16 @@ git checkout module-6
 
 # Check out Module 7 (Express + PostgreSQL monolith)
 git checkout module-7
-
-# Check out Module 8 (Modular Express Architecture)
-git checkout module-8
 ```
 
 ### 3. Install Dependencies & Run
-Inside `module-6`, `module-7`, or `module-8`:
+Inside `module-6` or `module-7`:
 
 ```bash
 # Navigate to the project directory
 cd node      # in module-6
 # OR
-cd express   # in module-7 / module-8
+cd express   # in module-7
 
 # Install dependencies
 npm install
@@ -235,7 +195,7 @@ For **`module-6`**, create `.env` inside `node/`:
 PORT=5000
 ```
 
-For **`module-7`** and **`module-8`**, create `.env` inside `express/`:
+For **`module-7`**, create `.env` inside `express/`:
 ```env
 PORT=5000
 CONNECTION_STRING=postgresql://<username>:<password>@<host>:<port>/<database>?sslmode=require
