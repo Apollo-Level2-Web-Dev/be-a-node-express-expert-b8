@@ -1,6 +1,6 @@
 # Be a Node & Express Expert 🚀
 
-Welcome to the **Be a Node & Express Expert** repository! This repository provides a comprehensive, hands-on learning roadmap for mastering backend web development—progressing from core JavaScript module systems and pure Node.js HTTP servers to Express.js architectures backed by PostgreSQL.
+Welcome to the **Be a Node & Express Expert** repository! This repository provides a comprehensive, hands-on learning roadmap for mastering backend web development—progressing from core JavaScript module systems and pure Node.js HTTP servers to production-ready, modular Express.js architectures backed by PostgreSQL, secure authentication, and relational data modeling.
 
 ---
 
@@ -11,6 +11,7 @@ Welcome to the **Be a Node & Express Expert** repository! This repository provid
   - [Module 5: JavaScript Module Systems (CommonJS vs ESM)](#module-5-javascript-module-systems-commonjs-vs-esm)
   - [Module 6: Pure Node.js HTTP Server & Custom REST API](#module-6-pure-nodejs-http-server--custom-rest-api)
   - [Module 7: Express.js Fundamentals & PostgreSQL Integration](#module-7-expressjs-fundamentals--postgresql-integration)
+  - [Module 8: Modular Architecture, Authentication & Relational Modeling](#module-8-modular-architecture-authentication--relational-modeling)
 - [Tech Stack](#-tech-stack)
 - [Getting Started & Branch Navigation](#-getting-started--branch-navigation)
 - [Environment Configuration](#-environment-configuration)
@@ -28,6 +29,7 @@ The codebase is organized into independent Git branches corresponding to each le
 | **[`module-5`](https://github.com/Apollo-Level2-Web-Dev/be-a-node-express-expert-b8/tree/module-5)** | Module Systems | `commonjs/`, `esm/` | CommonJS (`require`) vs ECMAScript Modules (`import`/`export`) |
 | **[`module-6`](https://github.com/Apollo-Level2-Web-Dev/be-a-node-express-expert-b8/tree/module-6)** | Pure Node.js | `node/` (TypeScript) | Raw `http` server, custom stream body-parser, JSON database CRUD |
 | **[`module-7`](https://github.com/Apollo-Level2-Web-Dev/be-a-node-express-expert-b8/tree/module-7)** | Express & SQL | `express/` (TypeScript) | Express setup, PostgreSQL connection pool (`pg`), raw SQL CRUD |
+| **[`module-8`](https://github.com/Apollo-Level2-Web-Dev/be-a-node-express-expert-b8/tree/module-8)** | Modular & Auth | `express/` (TypeScript) | 3-tier modular pattern, Bcrypt hashing, JWT authentication, 1-to-1 relational profiles with CASCADE delete |
 
 ---
 
@@ -135,12 +137,66 @@ express/
 
 ---
 
+### Module 8: Modular Architecture, Authentication & Relational Modeling
+> **Branch:** `module-8`  
+> **Key Concepts:** Separation of concerns, 3-tier modular architecture (Route -> Controller -> Service), Bcrypt password hashing, JWT authentication, PostgreSQL foreign key relations with `ON DELETE CASCADE`.
+
+Refactoring the monolithic server into an enterprise-grade modular pattern with authentication and relational modeling:
+- **`server.ts`**: Entry point responsible exclusively for starting the HTTP listener and initializing the PostgreSQL database pool.
+- **`app.ts`**: Express application instance, global middleware setup, and top-level router orchestration (`/api/v1/users`, `/api/v1/auth`, `/api/v1/profiles`).
+- **`db/index.ts`**: Dedicated database client connection and auto schema creation for both `users` and `profile` tables.
+- **Feature Modules (`src/modules/`)**:
+  - **`auth/`**: User login authentication (`POST /api/v1/auth/login`), password verification via `bcrypt.compare`, active account checks, and JWT access token issuance (`jwt.sign`).
+  - **`profile/`**: User profile management (`POST /api/v1/profiles`) linked via a 1-to-1 foreign key relation (`user_id INT UNIQUE REFERENCES users(id) ON DELETE CASCADE`).
+  - **`users/`**: Full user management with automatic password hashing (`bcrypt.hash`) on registration, password sanitization on output, and partial updates with `COALESCE`.
+
+#### Module 8 API Endpoints
+| Module | Method | Endpoint | Description |
+| :--- | :--- | :--- | :--- |
+| **Auth** | `POST` | `/api/v1/auth/login` | Authenticate user & return signed JWT token |
+| **Profile** | `POST` | `/api/v1/profiles` | Create profile for user (`user_id` foreign key) |
+| **Users** | `POST` | `/api/v1/users` | Register user (password hashed with Bcrypt) |
+| **Users** | `GET` | `/api/v1/users` | Retrieve all users (passwords omitted) |
+| **Users** | `GET` | `/api/v1/users/:id` | Retrieve user by ID |
+| **Users** | `PUT` | `/api/v1/users/:id` | Update user details (`COALESCE`) |
+| **Users** | `DELETE` | `/api/v1/users/:id` | Delete user (cascades to profile) |
+
+```text
+express/
+├── package.json
+├── tsconfig.json
+└── src/
+    ├── app.ts                  # Express application setup
+    ├── server.ts               # Server bootstrapping & listener
+    ├── config/
+    │   └── index.ts            # Environment config loader
+    ├── db/
+    │   └── index.ts            # Database pool & initDB (users & profile)
+    └── modules/
+        ├── auth/
+        │   ├── auth.controller.ts # Login request handler
+        │   ├── auth.route.ts      # Auth route definitions
+        │   └── auth.service.ts    # Bcrypt verify & JWT token generation
+        ├── profile/
+        │   ├── profile.controller.ts # Profile request handler
+        │   ├── profile.route.ts      # Profile route definitions
+        │   └── profile.service.ts    # Profile creation with FK check
+        └── users/
+            ├── user.interface.ts  # Types & interfaces
+            ├── user.route.ts      # User routes
+            ├── user.controller.ts # User request handlers
+            └── user.service.ts    # User CRUD & password hashing
+```
+
+---
+
 ## 🛠️ Tech Stack
 
 - **Runtime:** Node.js (v18+)
 - **Language:** TypeScript
 - **Framework:** Express.js
 - **Database:** PostgreSQL (`pg` pool)
+- **Security:** `bcryptjs` (password hashing), `jsonwebtoken` (JWT token auth)
 - **Dev Tooling:** `tsx` (TypeScript execute & watch), `dotenv`
 
 ---
@@ -165,16 +221,19 @@ git checkout module-6
 
 # Check out Module 7 (Express + PostgreSQL monolith)
 git checkout module-7
+
+# Check out Module 8 (Modular Express + Auth + Relational DB)
+git checkout module-8
 ```
 
 ### 3. Install Dependencies & Run
-Inside `module-6` or `module-7`:
+Inside `module-6`, `module-7`, or `module-8`:
 
 ```bash
 # Navigate to the project directory
 cd node      # in module-6
 # OR
-cd express   # in module-7
+cd express   # in module-7 / module-8
 
 # Install dependencies
 npm install
@@ -195,7 +254,7 @@ For **`module-6`**, create `.env` inside `node/`:
 PORT=5000
 ```
 
-For **`module-7`**, create `.env` inside `express/`:
+For **`module-7`** and **`module-8`**, create `.env` inside `express/`:
 ```env
 PORT=5000
 CONNECTION_STRING=postgresql://<username>:<password>@<host>:<port>/<database>?sslmode=require
