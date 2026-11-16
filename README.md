@@ -1,6 +1,6 @@
 # Be a Node & Express Expert 🚀
 
-Welcome to the **Be a Node & Express Expert** repository! This repository provides a comprehensive, hands-on learning roadmap for mastering backend web development—progressing from core JavaScript module systems and pure Node.js HTTP servers to production-ready, modular Express.js architectures backed by PostgreSQL, secure authentication, and relational data modeling.
+Welcome to the **Be a Node & Express Expert** repository! This repository provides a comprehensive, hands-on learning roadmap for mastering backend web development—progressing from core JavaScript module systems and pure Node.js HTTP servers to production-ready, modular Express.js architectures backed by PostgreSQL, secure authentication, relational modeling, and advanced middleware patterns.
 
 ---
 
@@ -12,6 +12,7 @@ Welcome to the **Be a Node & Express Expert** repository! This repository provid
   - [Module 6: Pure Node.js HTTP Server & Custom REST API](#module-6-pure-nodejs-http-server--custom-rest-api)
   - [Module 7: Express.js Fundamentals & PostgreSQL Integration](#module-7-expressjs-fundamentals--postgresql-integration)
   - [Module 8: Modular Architecture, Authentication & Relational Modeling](#module-8-modular-architecture-authentication--relational-modeling)
+  - [Module 9: Advanced Middlewares, RBAC & Global Error Handling](#module-9-advanced-middlewares-rbac--global-error-handling)
 - [Tech Stack](#-tech-stack)
 - [Getting Started & Branch Navigation](#-getting-started--branch-navigation)
 - [Environment Configuration](#-environment-configuration)
@@ -29,7 +30,8 @@ The codebase is organized into independent Git branches corresponding to each le
 | **[`module-5`](https://github.com/Apollo-Level2-Web-Dev/be-a-node-express-expert-b8/tree/module-5)** | Module Systems | `commonjs/`, `esm/` | CommonJS (`require`) vs ECMAScript Modules (`import`/`export`) |
 | **[`module-6`](https://github.com/Apollo-Level2-Web-Dev/be-a-node-express-expert-b8/tree/module-6)** | Pure Node.js | `node/` (TypeScript) | Raw `http` server, custom stream body-parser, JSON database CRUD |
 | **[`module-7`](https://github.com/Apollo-Level2-Web-Dev/be-a-node-express-expert-b8/tree/module-7)** | Express & SQL | `express/` (TypeScript) | Express setup, PostgreSQL connection pool (`pg`), raw SQL CRUD |
-| **[`module-8`](https://github.com/Apollo-Level2-Web-Dev/be-a-node-express-expert-b8/tree/module-8)** | Modular & Auth | `express/` (TypeScript) | 3-tier modular pattern, Bcrypt hashing, JWT authentication, 1-to-1 relational profiles with CASCADE delete |
+| **[`module-8`](https://github.com/Apollo-Level2-Web-Dev/be-a-node-express-expert-b8/tree/module-8)** | Modular & Auth | `express/` (TypeScript) | 3-tier modular pattern, Bcrypt hashing, JWT authentication, 1-to-1 relational profiles |
+| **[`module-9`](https://github.com/Apollo-Level2-Web-Dev/be-a-node-express-expert-b8/tree/module-9)** | Middleware & RBAC | `express/` (TypeScript) | Role-Based Access Control, custom audit logger, global error handler, CORS & cookies |
 
 ---
 
@@ -150,42 +152,53 @@ Refactoring the monolithic server into an enterprise-grade modular pattern with 
   - **`profile/`**: User profile management (`POST /api/v1/profiles`) linked via a 1-to-1 foreign key relation (`user_id INT UNIQUE REFERENCES users(id) ON DELETE CASCADE`).
   - **`users/`**: Full user management with automatic password hashing (`bcrypt.hash`) on registration, password sanitization on output, and partial updates with `COALESCE`.
 
-#### Module 8 API Endpoints
-| Module | Method | Endpoint | Description |
-| :--- | :--- | :--- | :--- |
-| **Auth** | `POST` | `/api/v1/auth/login` | Authenticate user & return signed JWT token |
-| **Profile** | `POST` | `/api/v1/profiles` | Create profile for user (`user_id` foreign key) |
-| **Users** | `POST` | `/api/v1/users` | Register user (password hashed with Bcrypt) |
-| **Users** | `GET` | `/api/v1/users` | Retrieve all users (passwords omitted) |
-| **Users** | `GET` | `/api/v1/users/:id` | Retrieve user by ID |
-| **Users** | `PUT` | `/api/v1/users/:id` | Update user details (`COALESCE`) |
-| **Users** | `DELETE` | `/api/v1/users/:id` | Delete user (cascades to profile) |
+---
+
+### Module 9: Advanced Middlewares, RBAC & Global Error Handling
+> **Branch:** `module-9`  
+> **Key Concepts:** Role-Based Access Control (RBAC), Custom audit logging middleware, Global Error Handler, TypeScript declaration merging, CORS & Cookie Parser.
+
+Extending the modular Express architecture with production-ready security, diagnostics, and routing guards:
+- **Role-Based Access Control (`src/middleware/auth.ts`):** Higher-order middleware accepting allowed roles (e.g. `auth(USER_ROLE.admin, USER_ROLE.agent)`). Verifies JWT token, validates database active status, and checks role permissions.
+- **TypeScript Declaration Merging (`src/middleware/index.d.ts`):** Extends Express `Request` type to strongly type `req.user`.
+- **Global Error Handling Middleware (`src/middleware/globalErrorHandler.ts`):** Centralized 4-argument error catcher managing server diagnostics and uniform JSON error payloads.
+- **File-based Request Logger (`src/middleware/logger.ts`):** Custom middleware asynchronously recording request method, URL, and timestamps into `logger.txt`.
+- **CORS & Cookie Parser:** Integration for origin controls and cookie handling.
+- **Generic Type-Safe Response Utility (`src/utils/sencResponse.ts`):** Standardizes API responses with generics.
+
+#### Module 9 API Endpoints & Permission Matrix
+| Module | Method | Endpoint | Role Access | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **System** | `GET` | `/` | **Public** | API root health check |
+| **Auth** | `POST` | `/api/v1/auth/login` | **Public** | Authenticate & return signed JWT |
+| **Profile** | `POST` | `/api/v1/profiles` | **Public** | Create user profile (1-to-1 foreign key) |
+| **Users** | `POST` | `/api/v1/users` | **Public** | Register user (password hashed with Bcrypt) |
+| **Users** | `GET` | `/api/v1/users` | `admin`, `agent` | Retrieve all users |
+| **Users** | `GET` | `/api/v1/users/:id` | `admin`, `agent`, `user` | Retrieve user by ID |
+| **Users** | `PUT` | `/api/v1/users/:id` | `admin`, `user` | Update user details (`COALESCE`) |
+| **Users** | `DELETE` | `/api/v1/users/:id` | **Public / Controller** | Delete user (cascades to profile) |
 
 ```text
 express/
 ├── package.json
 ├── tsconfig.json
+├── logger.txt
 └── src/
-    ├── app.ts                  # Express application setup
-    ├── server.ts               # Server bootstrapping & listener
-    ├── config/
-    │   └── index.ts            # Environment config loader
-    ├── db/
-    │   └── index.ts            # Database pool & initDB (users & profile)
-    └── modules/
-        ├── auth/
-        │   ├── auth.controller.ts # Login request handler
-        │   ├── auth.route.ts      # Auth route definitions
-        │   └── auth.service.ts    # Bcrypt verify & JWT token generation
-        ├── profile/
-        │   ├── profile.controller.ts # Profile request handler
-        │   ├── profile.route.ts      # Profile route definitions
-        │   └── profile.service.ts    # Profile creation with FK check
-        └── users/
-            ├── user.interface.ts  # Types & interfaces
-            ├── user.route.ts      # User routes
-            ├── user.controller.ts # User request handlers
-            └── user.service.ts    # User CRUD & password hashing
+    ├── app.ts                  # App configuration & middleware pipeline
+    ├── server.ts               # Server bootstrap & DB connection
+    ├── config/index.ts         # Environment variables loader
+    ├── db/index.ts             # PostgreSQL pool & auto schema migrations
+    ├── middleware/
+    │   ├── auth.ts             # JWT authentication & RBAC middleware
+    │   ├── globalErrorHandler.ts # Centralized error handler
+    │   ├── index.d.ts          # Express.Request declaration merging
+    │   └── logger.ts           # File-based request audit logger
+    ├── modules/
+    │   ├── auth/               # Authentication module
+    │   ├── profile/            # User profile module
+    │   └── users/              # Users CRUD with RBAC route protection
+    ├── types/index.ts          # Role definitions & constants
+    └── utils/sencResponse.ts   # Generic response helper
 ```
 
 ---
@@ -196,8 +209,9 @@ express/
 - **Language:** TypeScript
 - **Framework:** Express.js
 - **Database:** PostgreSQL (`pg` pool)
-- **Security:** `bcryptjs` (password hashing), `jsonwebtoken` (JWT token auth)
-- **Dev Tooling:** `tsx` (TypeScript execute & watch), `dotenv`
+- **Security & Auth:** `bcryptjs` (password hashing), `jsonwebtoken` (JWT & RBAC)
+- **Utilities & Middleware:** `cors`, `cookie-parser`, `dotenv`
+- **Dev Tooling:** `tsx` (TypeScript execute & watch)
 
 ---
 
@@ -213,27 +227,30 @@ cd be-a-node-express-expert-b8
 You can checkout any branch to explore its specific implementation:
 
 ```bash
-# Check out Module 5 (Module Systems)
+# Module 5: Module Systems
 git checkout module-5
 
-# Check out Module 6 (Pure Node HTTP Server)
+# Module 6: Pure Node HTTP Server
 git checkout module-6
 
-# Check out Module 7 (Express + PostgreSQL monolith)
+# Module 7: Express + PostgreSQL monolith
 git checkout module-7
 
-# Check out Module 8 (Modular Express + Auth + Relational DB)
+# Module 8: Modular Express + Auth + Relational DB
 git checkout module-8
+
+# Module 9: Advanced Middlewares, RBAC & Global Error Handling
+git checkout module-9
 ```
 
 ### 3. Install Dependencies & Run
-Inside `module-6`, `module-7`, or `module-8`:
+Inside `module-6`, `module-7`, `module-8`, or `module-9`:
 
 ```bash
 # Navigate to the project directory
 cd node      # in module-6
 # OR
-cd express   # in module-7 / module-8
+cd express   # in module-7 / module-8 / module-9
 
 # Install dependencies
 npm install
@@ -257,7 +274,15 @@ PORT=5000
 For **`module-7`** and **`module-8`**, create `.env` inside `express/`:
 ```env
 PORT=5000
-CONNECTION_STRING=postgresql://<username>:<password>@<host>:<port>/<database>?sslmode=require
+DATABASE_URL=postgresql://<username>:<password>@<host>:<port>/<database>?sslmode=require
+```
+
+For **`module-9`**, create `.env` inside `express/`:
+```env
+PORT=5000
+DATABASE_URL=postgresql://<username>:<password>@<host>:<port>/<database>?sslmode=require
+JWT_SECRET=your_super_secret_jwt_key
+JWT_REFRESH_SECRET=your_super_secret_refresh_key
 ```
 
 ---
